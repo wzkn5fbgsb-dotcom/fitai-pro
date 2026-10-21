@@ -1,0 +1,23 @@
+# Compara la base de alimentos con la API oficial de USDA FoodData Central.
+# Secret: FDC_API_KEY (gratis en https://fdc.nal.usda.gov/api-key-signup).
+name: Verificar datos de alimentos (USDA)
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: '17 9 1 * *' # día 1 de cada mes
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: npm run verify:usda
+        env:
+          FDC_API_KEY: ${{ secrets.FDC_API_KEY }}

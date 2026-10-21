@@ -1,0 +1,14 @@
+{
+  "name": "FITAI PRO",
+  "image": "mcr.microsoft.com/devcontainers/javascript-node:22",
+  "postCreateCommand": "npm install && npx expo install --fix",
+  "forwardPorts": [8081],
+  "portsAttributes": {
+    "8081": { "label": "Expo (Metro)", "onAutoForward": "silent" }
+  },
+  "customizations": {
+    "vscode": {
+      "extensions": ["expo.vscode-expo-tools", "denoland.vscode-deno"]
+    }
+  }
+}

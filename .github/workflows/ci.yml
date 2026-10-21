@@ -1,0 +1,67 @@
+# Comprobaciones automáticas en cada push o pull request.
+name: CI
+
+on:
+  push:
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  app:
+    name: Tipos, pruebas del motor y copia del motor al servidor
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: npm install
+      - name: Versiones de Expo (informativo)
+        run: npx expo install --check || echo "::warning::Hay versiones que no coinciden con Expo SDK 57. Ejecuta 'npx expo install --fix' (por ejemplo en Codespaces)."
+      - run: npm run typecheck
+      - run: npm test
+      - name: El motor del servidor es idéntico al de la app
+        run: node --experimental-strip-types --no-warnings scripts/sync-functions.ts --check
+
+  db-tests:
+    name: Base de datos (migraciones, seed y RLS)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Instalar PostgreSQL
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y postgresql
+      - name: Ejecutar pruebas como usuario sin privilegios
+        # initdb no puede ejecutarse como root: usamos un usuario dedicado.
+        run: |
+          sudo useradd -m dbtest || true
+          sudo cp -r "$GITHUB_WORKSPACE" /home/dbtest/repo
+          sudo chown -R dbtest:dbtest /home/dbtest/repo
+          sudo -u dbtest env "PATH=$PATH" bash -c 'cd /home/dbtest/repo && bash scripts/test-db.sh'
+
+  deno-check:
+    name: Funciones del servidor (Deno)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: denoland/setup-deno@v2
+        with:
+          deno-version: v2.x
+      - run: deno check supabase/functions/*/index.ts
+
+  export:
+    name: El paquete JS compila para iOS y Android
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: npm install
+      - run: npx expo export --platform ios --platform android --output-dir dist-check

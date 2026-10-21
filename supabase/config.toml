@@ -1,0 +1,13 @@
+# Configuración mínima del proyecto Supabase para la CLI.
+project_id = "fitai-pro"
+
+[auth]
+# La app usa correo + contraseña y códigos de un solo uso para recuperar el acceso.
+enable_signup = true
+
+[auth.email]
+enable_confirmations = true
+
+# El webhook lo llama RevenueCat (sin sesión de usuario): se valida con su propia cabecera secreta.
+[functions.revenuecat-webhook]
+verify_jwt = false

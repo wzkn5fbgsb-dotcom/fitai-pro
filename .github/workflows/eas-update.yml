@@ -1,0 +1,31 @@
+# Publica una actualización por aire (sólo código JS/recursos) para el canal "preview".
+# Sólo llega a apps compiladas con el perfil preview y la misma versión (runtimeVersion = appVersion).
+name: EAS update (preview)
+
+on:
+  workflow_dispatch:
+    inputs:
+      message:
+        description: Descripción del cambio
+        required: true
+        default: Actualización de prueba
+
+permissions:
+  contents: read
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    env:
+      EAS_PROJECT_ID: ${{ secrets.EAS_PROJECT_ID }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - uses: expo/expo-github-action@v8
+        with:
+          eas-version: latest
+          token: ${{ secrets.EXPO_TOKEN }}
+      - run: npm install
+      - run: eas update --channel preview --environment preview --message "${{ inputs.message }}" --non-interactive
